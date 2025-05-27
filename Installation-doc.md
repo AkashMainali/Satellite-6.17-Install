@@ -1,4 +1,4 @@
-#Red Hat Satellite 6.17 Installation and Database Migration Guide
+# Red Hat Satellite 6.17 Installation and Database Migration Guide
 
 This document outlines the steps to install Red Hat Satellite 6.17 on a RHEL 9 server using an external PostgreSQL database on a separate RHEL 9 server, and the process to migrate data from an existing Satellite 6.16.x instance.
 
