@@ -265,4 +265,8 @@ If an in-place upgrade of the old Satellite is not feasible, the alternative is:
 This method does not preserve historical data, job history, or trend data.
 
 **Always consult official Red Hat Satellite documentation and consider Red Hat support for complex migration scenarios.**
+<<<<<<< HEAD:Installation-doc.git
 *** https://docs.redhat.com/en/documentation/red_hat_satellite/6.17/html/installing_satellite_server_in_a_connected_network_environment/installing_server_connected_satellite ***
+=======
+***https://docs.redhat.com/en/documentation/red_hat_satellite/6.17/html/installing_satellite_server_in_a_connected_network_environment/installing_server_connected_satellite***
+>>>>>>> 0c9e496 (Added Initial Document):Installation-doc.md
