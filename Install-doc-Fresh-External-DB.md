@@ -7,7 +7,6 @@ This document outlines the steps to install Red Hat Satellite 6.17 on a RHEL 9 s
 1.  [Prerequisites and Planning](#1-prerequisites-and-planning)
 2.  [Setting Up the External PostgreSQL Server (RHEL 9)](#2-setting-up-the-external-postgresql-server-rhel-9)
 3.  [Installing Satellite 6.17 on RHEL 9](#3-installing-satellite-617-on-rhel-9)
-4.  [Database Migration from Satellite 6.16.x](#4-database-migration-from-satellite-616x)
 
 ---
 
@@ -186,87 +185,5 @@ This server will host the Satellite 6.17 application. It will get its *Satellite
     sudo firewall-cmd --list-all
     ```
 
----
-
-## 4. Database Migration from Satellite 6.16.x
-
-**CRITICAL WARNING:** Directly migrating a Satellite 6.16.x database (from RHEL 8) to a fresh Satellite 6.17 installation (on RHEL 9 with an external DB) is **NOT a straightforward or officially recommended path by Red Hat for preserving all data and ensuring stability.** The database schemas change between versions.
-
-**Recommended Approach (In-Place Upgrade First, then Migrate DB):**
-
-The most reliable method involves upgrading your *existing* Satellite 6.16.x on RHEL 8 to Satellite 6.17 *first*. This ensures the database schema is correctly updated by the official upgrade process. Then, you migrate this upgraded 6.17 database to your new external PostgreSQL server.
-
-**Steps (Assuming you've upgraded your old Satellite to 6.17 on RHEL 8):**
-
-1.  **Prepare the New RHEL 9 PostgreSQL Server:**
-    * Ensure the PostgreSQL server is set up as described in [Section 2](#2-setting-up-the-external-postgresql-server-rhel-9), but **do not run the Satellite installer against it yet if you intend to restore a migrated DB.** The databases (`foreman`, `pulpcore`) should ideally be empty or non-existent before restoring.
-
-2.  **Backup the Upgraded Satellite 6.17 Database (on the old RHEL 8 server):**
-    * Stop Satellite services on your *old* (now upgraded to 6.17) Satellite server:
-        ```bash
-        sudo satellite-maintain service stop
-        ```
-    * Perform a database dump for the `foreman` and `pulpcore` databases using `pg_dump`.
-        * **For the `foreman` database (Candlepin, Foreman):**
-            ```bash
-            sudo -u postgres pg_dump -Fc foreman > /backup/foreman_db_617.dump
-            ```
-        * **For the `pulpcore` database (Pulp 3):**
-            ```bash
-            sudo -u postgres pg_dump -Fc pulpcore > /backup/pulpcore_db_617.dump
-            ```
-        *(Adjust paths and ensure the `postgres` user has write permissions to `/backup` or your chosen backup location.)*
-    * Restart services on the old Satellite if you need it running temporarily:
-        ```bash
-        sudo satellite-maintain service start
-        ```
-
-3.  **Transfer Backup Files:**
-    * Securely transfer `foreman_db_617.dump` and `pulpcore_db_617.dump` to your **new RHEL 9 PostgreSQL server**.
-
-4.  **Restore Databases on the New RHEL 9 PostgreSQL Server:**
-    * **Important:** Ensure no Satellite 6.17 installation has been run against these databases yet, or drop and recreate them if necessary.
-    * Create the database users (`foreman_user`, `pulp_user`) if they don't exist. These must match what you intend to use in the `satellite-installer` command later.
-        ```sql
-        -- Connect to psql as postgres user
-        CREATE USER foreman_user WITH PASSWORD '<foreman_db_secure_password>';
-        CREATE USER pulp_user WITH PASSWORD '<pulp_db_secure_password>';
-        ```
-    * Create the databases and set ownership:
-        ```sql
-        CREATE DATABASE foreman OWNER foreman_user;
-        CREATE DATABASE pulpcore OWNER pulp_user;
-        ```
-    * Restore the databases:
-        ```bash
-        sudo -u postgres pg_restore -d foreman -U foreman_user --no-owner --no-privileges --clean --if-exists /path/to/foreman_db_617.dump
-        sudo -u postgres pg_restore -d pulpcore -U pulp_user --no-owner --no-privileges --clean --if-exists /path/to/pulpcore_db_617.dump
-        ```
-        * `--no-owner --no-privileges` are often used to avoid permission issues when restoring to a different environment/user setup. The `satellite-installer` should later fix permissions.
-        * `--clean --if-exists` helps ensure a clean restore.
-
-5.  **Run Satellite 6.17 Installer on the New RHEL 9 Satellite Server:**
-    * Now, run the `satellite-installer` command as detailed in [Section 3, Step 5](#3-installing-satellite-617-on-rhel-9).
-    * Use the **same database names, usernames, and passwords** that you used when creating/restoring the databases on the PostgreSQL server.
-    * The installer should detect the existing (migrated) databases and adapt/update them as necessary for version 6.17.
-
-6.  **Post-Migration Checks:**
-    * Thoroughly check Satellite functionality: content sync, host registration, errata, etc.
-    * Run `sudo satellite-maintain health check`.
-    * Review logs for any errors: `/var/log/foreman-installer/satellite.log`, `/var/log/foreman/production.log`, Pulp logs in `/var/log/pulpcore/`.
-
-**Alternative (Risky - Fresh Install & Data Re-Sync/Re-Configure):**
-
-If an in-place upgrade of the old Satellite is not feasible, the alternative is:
-1.  Install Satellite 6.17 fresh on RHEL 9 with the external DB (as per Sections 2 & 3).
-2.  Manually re-create configurations (organizations, locations, activation keys, content views, sync plans, etc.) on the new Satellite.
-3.  Re-sync all Red Hat repository content from scratch.
-4.  Re-register all client hosts to the new Satellite server.
-This method does not preserve historical data, job history, or trend data.
-
 **Always consult official Red Hat Satellite documentation and consider Red Hat support for complex migration scenarios.**
-<<<<<<< HEAD:Installation-doc.git
 *** https://docs.redhat.com/en/documentation/red_hat_satellite/6.17/html/installing_satellite_server_in_a_connected_network_environment/installing_server_connected_satellite ***
-=======
-***https://docs.redhat.com/en/documentation/red_hat_satellite/6.17/html/installing_satellite_server_in_a_connected_network_environment/installing_server_connected_satellite***
->>>>>>> 0c9e496 (Added Initial Document):Installation-doc.md
