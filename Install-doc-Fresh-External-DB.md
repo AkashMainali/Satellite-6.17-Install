@@ -186,4 +186,4 @@ This server will host the Satellite 6.17 application. It will get its *Satellite
     ```
 
 **Always consult official Red Hat Satellite documentation and consider Red Hat support for complex migration scenarios.**
-*** https://docs.redhat.com/en/documentation/red_hat_satellite/6.17/html/installing_satellite_server_in_a_connected_network_environment/installing_server_connected_satellite ***
+***https://docs.redhat.com/en/documentation/red_hat_satellite/6.17/html/installing_satellite_server_in_a_connected_network_environment/installing_server_connected_satellite***
